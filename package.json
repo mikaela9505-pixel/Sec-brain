@@ -1,9 +1,0 @@
-{
-  "name": "second-brain",
-  "version": "1.0.0",
-  "description": "Second Brain PWA",
-  "scripts": {
-    "build": "echo 'No build needed'"
-  },
-  "dependencies": {}
-}
