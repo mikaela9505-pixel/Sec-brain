@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Second Brain">
+<meta name="theme-color" content="#FAF8F4">
+<title>Second Brain</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream:      #FAF8F4;
+  --parchment:  #F2EDE4;
+  --stone:      #E4DDD2;
+  --taupe:      #B8AFA0;
+  --walnut:     #7A6548;
+  --espresso:   #3D2E1E;
+  --ink:        #1C1510;
+  --gold:       #B8963E;
+  --gold-light: #D4AF6A;
+  --gold-pale:  #EDD98A22;
+  --white:      #FFFFFF;
+  --shadow-sm:  0 1px 8px rgba(28,21,16,.06);
+  --shadow-md:  0 4px 24px rgba(28,21,16,.10);
+  --shadow-lg:  0 12px 48px rgba(28,21,16,.14);
+  --r:          16px;
+  --r-sm:       10px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Jost', sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ── LAYOUT ─────────────────────────────── */
+.app {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ── HEADER ─────────────────────────────── */
+.header {
+  padding: env(safe-area-inset-top, 12px) 24px 0;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+}
+
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--stone);
+}
+
+.greeting-block {}
+
+.greeting {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  color: var(--ink);
+}
+
+.greeting em {
+  font-style: italic;
+  color: var(--walnut);
+}
+
+.sub {
+  margin-top: 4px;
+  font-size: .65rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--taupe);
+}
+
+.time-block {
+  text-align: right;
+}
+
+.time {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem;
+  font-weight: 300;
+  letter-spacing: -.03em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.date {
+  font-size: .72rem;
+  color: var(--walnut);
+  margin-top: 3px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+}
+
+/* ── NAV TABS ───────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 24px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 400;
+  letter-spacing: .06em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .2s;
+  color: var(--taupe);
+  background: transparent;
+  font-family: 'Jost', sans-serif;
+}
+
+.tab.active {
+  background: var(--ink);
+  color: var(--cream);
+  border-color: var(--ink);
+}
+
+.tab:not(.active):hover {
+  border-color: var(--stone);
+  color: var(--walnut);
+}
+
+/* ── SCROLL AREA ────────────────────────── */
+.scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 24px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--stone) transparent;
+}
+
+/* ── VIEWS ──────────────────────────────── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── CARDS ──────────────────────────────── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--stone);
+  border-radius: var(--r);
+  padding: 20px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  animation: up .35s ease both;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 50%, transparent 100%);
+}
+
+.card-label {
+  font-size: .62rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--stone);
+}
+
+/* ── PRIORITY LIST ──────────────────────── */
+.p-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+.p-item {
+  border: 1px solid var(--stone);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+
+.p-item:hover { border-color: var(--gold-light); }
+.p-item.open  { border-color: var(--gold); }
+
+.p-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  background: var(--parchment);
+  user-select: none;
+}
+
+.p-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--gold);
+  min-width: 12px;
+  line-height: 1;
+}
+
+.p-title {
+  flex: 1;
+  font-size: .82rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.p-chevron {
+  width: 14px; height: 14px;
+  stroke: var(--taupe); fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  transition: transform .22s ease;
+  flex-shrink: 0;
+}
+
+.p-item.open .p-chevron { transform: rotate(180deg); }
+
+.p-body {
+  display: none;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--stone);
+  background: var(--white);
+}
+
+.p-item.open .p-body { display: block; }
+
+.p-desc {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .95rem;
+  font-style: italic;
+  color: var(--walnut);
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+
+.steps-label {
+  font-size: .6rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  margin-bottom: 8px;
+}
+
+.steps { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+
+.step {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+}
+
+.step-n {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .58rem;
+  color: var(--gold);
+  font-family: 'Cormorant Garamond', serif;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.step-t {
+  font-size: .78rem;
+  line-height: 1.5;
+  color: var(--espresso);
+}
+
+/* ── FOCUS CARD ─────────────────────────── */
+.focus-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.25rem;
+  font-style: italic;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--walnut);
+}
+
+/* ── INBOX ──────────────────────────────── */
+.inbox-list { display: flex; flex-direction: column; gap: 8px; }
+
+.inbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  background: var(--parchment);
+  border: 1px solid var(--stone);
+  border-radius: var(--r-sm);
+  transition: border-color .2s;
+}
+
+.inbox-item.moved {
+  opacity: .35;
+  text-decoration: line-through;
+}
+
+.inbox-text-block { flex: 1; }
+
+.inbox-text {
+  font-size: .82rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.inbox-cat {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: .62rem;
+  letter-spacing: .08em;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid currentColor;
+}
+
+.cat-vardag  { color: #6B8C6B; }
+.cat-jobb    { color: #5B7A8E; }
+.cat-maire   { color: #8E6B7A; }
+.cat-mevent  { color: #8E7A5B; }
+.cat-projekt { color: var(--walnut); }
+
+.move-btn {
+  font-size: .68rem;
+  padding: 5px 10px;
+  background: var(--ink);
+  color: var(--cream);
+  border: none; border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Jost', sans-serif;
+  font-weight: 400;
+  transition: background .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.move-btn:hover { background: var(--walnut); }
+.move-btn:disabled { background: var(--taupe); cursor: default; }
+
+/* ── ADD INBOX ──────────────────────────── */
+.add-inbox {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.add-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--stone);
+  border-radius: var(--r-sm);
+  font-family: 'Jost', sans-serif;
+  font-size: .82rem;
+  background: var(--white);
+  color: var(--ink);
+  outline: none;
+  transition: border-color .2s;
+}
+
+.add-input:focus { border-color: var(--gold); }
+.add-input::placeholder { color: var(--taupe); }
+
+.add-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+  flex-shrink: 0;
+}
+
+.add-btn:hover { background: var(--walnut); }
+
+.add-btn svg {
+  width: 16px; height: 16px;
+  stroke: var(--cream); fill: none;
+  stroke-width: 2; stroke-linecap: round;
+}
+
+/* ── PROJECTS ───────────────────────────── */
+.proj-list { display: flex; flex-direction: column; gap: 10px; }
+
+.proj-card {
+  border: 1px solid var(--stone);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+
+.proj-card:hover { border-color: var(--gold-light); }
+.proj-card.open  { border-color: var(--gold); }
+
+.proj-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  background: var(--parchment);
+}
+
+.proj-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.proj-title-block { flex: 1; }
+
+.proj-name {
+  font-size: .84rem;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.proj-next {
+  font-size: .7rem;
+  color: var(--taupe);
+  margin-top: 2px;
+}
+
+.proj-status {
+  font-size: .6rem;
+  letter-spacing: .1em;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: var(--gold-pale);
+  color: var(--walnut);
+  border: 1px solid var(--gold-light);
+}
+
+.proj-body {
+  display: none;
+  padding: 14px;
+  border-top: 1px solid var(--stone);
+  background: var(--white);
+}
+
+.proj-card.open .proj-body { display: block; }
+
+.proj-detail {
+  font-size: .8rem;
+  line-height: 1.7;
+  color: var(--espresso);
+  white-space: pre-line;
+}
+
+.proj-edit-btn {
+  margin-top: 10px;
+  font-size: .7rem;
+  padding: 5px 12px;
+  background: transparent;
+  color: var(--walnut);
+  border: 1px solid var(--stone);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Jost', sans-serif;
+  transition: border-color .15s;
+}
+
+.proj-edit-btn:hover { border-color: var(--gold); }
+
+/* ── VARDAG/JOBB VIEWS ──────────────────── */
+.section-block { margin-bottom: 20px; }
+
+.section-title {
+  font-size: .62rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--taupe);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--stone);
+}
+
+.checklist { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--white);
+  border: 1px solid var(--stone);
+  border-radius: var(--r-sm);
+  font-size: .82rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.check-item input[type=checkbox] {
+  margin-top: 2px;
+  accent-color: var(--gold);
+  width: 14px; height: 14px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.check-item.done { opacity: .45; }
+.check-item.done span { text-decoration: line-through; }
+
+.note-area {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px 14px;
+  border: 1px solid var(--stone);
+  border-radius: var(--r-sm);
+  font-family: 'Jost', sans-serif;
+  font-size: .82rem;
+  background: var(--white);
+  color: var(--ink);
+  outline: none;
+  resize: vertical;
+  transition: border-color .2s;
+  line-height: 1.6;
+}
+
+.note-area:focus { border-color: var(--gold); }
+.note-area::placeholder { color: var(--taupe); }
+
+.save-note-btn {
+  margin-top: 8px;
+  font-size: .7rem;
+  padding: 6px 14px;
+  background: var(--ink);
+  color: var(--cream);
+  border: none; border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Jost', sans-serif;
+  transition: background .15s;
+}
+
+.save-note-btn:hover { background: var(--walnut); }
+
+/* ── BOTTOM NAV ─────────────────────────── */
+.bottom-nav {
+  display: flex;
+  padding: 8px 16px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  background: var(--white);
+  border-top: 1px solid var(--stone);
+  gap: 2px;
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: background .15s;
+  font-family: 'Jost', sans-serif;
+}
+
+.nav-btn.active { background: var(--parchment); }
+
+.nav-btn svg {
+  width: 20px; height: 20px;
+  stroke: var(--taupe); fill: none;
+  stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  transition: stroke .15s;
+}
+
+.nav-btn.active svg, .nav-btn:hover svg { stroke: var(--walnut); }
+
+.nav-label {
+  font-size: .58rem;
+  letter-spacing: .08em;
+  color: var(--taupe);
+  text-transform: uppercase;
+  transition: color .15s;
+}
+
+.nav-btn.active .nav-label,
+.nav-btn:hover .nav-label { color: var(--walnut); }
+
+/* ── SKELETON ───────────────────────────── */
+.sk {
+  background: linear-gradient(90deg, var(--stone) 25%, var(--parchment) 50%, var(--stone) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 5px;
+  height: 13px;
+  margin-bottom: 7px;
+}
+
+.sk.short  { width: 55%; }
+.sk.medium { width: 78%; }
+.sk.full   { width: 100%; }
+
+/* ── EMPTY STATE ────────────────────────── */
+.empty {
+  text-align: center;
+  padding: 32px 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--taupe);
+}
+
+/* ── LOADING INLINE ─────────────────────── */
+.inline-loading {
+  font-size: .75rem;
+  color: var(--taupe);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 0;
+}
+
+.inline-loading::before {
+  content: '';
+  width: 11px; height: 11px;
+  border: 1.5px solid var(--stone);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── REFRESH FAB ────────────────────────── */
+.fab {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+  right: 20px;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-md);
+  transition: transform .2s, background .2s;
+  z-index: 50;
+}
+
+.fab:hover { background: var(--walnut); transform: scale(1.05); }
+.fab.spinning svg { animation: spin .8s linear infinite; }
+
+.fab svg {
+  width: 16px; height: 16px;
+  stroke: var(--cream); fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── TOAST ──────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: var(--cream);
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: .75rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .25s, transform .25s;
+  z-index: 100;
+  white-space: nowrap;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── ANIMATIONS ─────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.card:nth-child(1) { animation-delay: .04s; }
+.card:nth-child(2) { animation-delay: .1s; }
+.card:nth-child(3) { animation-delay: .16s; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="greeting-block">
+        <h1 class="greeting">God <em id="tod">dag</em>, Al.</h1>
+        <p class="sub">Second Brain</p>
+      </div>
+      <div class="time-block">
+        <div class="time" id="clk">—</div>
+        <div class="date" id="dt">—</div>
+      </div>
+    </div>
+
+    <!-- Tabs (for Today view) -->
+    <div class="tabs" id="tabs" style="display:none;">
+      <button class="tab active" data-tab="idag">Idag</button>
+      <button class="tab" data-tab="inkorg">Inkorg</button>
+      <button class="tab" data-tab="projekt">Projekt</button>
+    </div>
+  </header>
+
+  <!-- SCROLL AREA -->
+  <div class="scroll" id="scroll">
+
+    <!-- VIEW: IDAG -->
+    <div class="view active" id="view-idag">
+      <!-- Focus -->
+      <div class="card">
+        <div class="card-label">Fokus idag</div>
+        <div class="focus-text" id="focus-text"><div class="sk medium"></div><div class="sk short"></div></div>
+      </div>
+
+      <!-- Priorities -->
+      <div class="card">
+        <div class="card-label">Dagens prioriteringar</div>
+        <ul class="p-list" id="prio-list">
+          <li><div class="sk full"></div></li>
+          <li><div class="sk medium"></div></li>
+          <li><div class="sk short"></div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- VIEW: INKORG -->
+    <div class="view" id="view-inkorg">
+      <div class="card">
+        <div class="card-label">Lägg till i inkorg</div>
+        <div class="add-inbox">
+          <input class="add-input" id="inbox-input" type="text" placeholder="Tanke, idé, uppgift…" autocomplete="off">
+          <button class="add-btn" id="inbox-add-btn" title="Lägg till">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Att sortera</div>
+        <div id="inbox-list"><div class="sk full"></div><div class="sk medium"></div></div>
+      </div>
+    </div>
+
+    <!-- VIEW: PROJEKT -->
+    <div class="view" id="view-projekt">
+      <div class="card">
+        <div class="card-label">Aktiva projekt</div>
+        <div class="proj-list" id="proj-list">
+          <div class="sk full"></div><div class="sk medium"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: VARDAG -->
+    <div class="view" id="view-vardag">
+      <div class="card">
+        <div class="card-label">Vardag & familj</div>
+
+        <div class="section-block">
+          <div class="section-title">Inköpslista</div>
+          <div class="add-inbox" style="margin-bottom:8px;">
+            <input class="add-input" id="shopping-input" placeholder="Lägg till vara…" autocomplete="off">
+            <button class="add-btn" id="shopping-add-btn" title="Lägg till">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+          <ul class="checklist" id="shopping-list"></ul>
+        </div>
+
+        <div class="section-block">
+          <div class="section-title">Att komma ihåg</div>
+          <textarea class="note-area" id="family-notes" placeholder="Barnens schema, viktiga datum, saker att ta upp…"></textarea>
+          <button class="save-note-btn" id="save-family-btn">Spara</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: JOBB -->
+    <div class="view" id="view-jobb">
+      <div class="card">
+        <div class="card-label">Jobb — kliniken</div>
+
+        <div class="section-block">
+          <div class="section-title">Att göra</div>
+          <div class="add-inbox" style="margin-bottom:8px;">
+            <input class="add-input" id="work-input" placeholder="Uppgift, att följa upp…" autocomplete="off">
+            <button class="add-btn" id="work-add-btn" title="Lägg till">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+          <ul class="checklist" id="work-list"></ul>
+        </div>
+
+        <div class="section-block">
+          <div class="section-title">Anteckningar</div>
+          <textarea class="note-area" id="work-notes" placeholder="Möten, idéer, saker att ta upp med chef…"></textarea>
+          <button class="save-note-btn" id="save-work-btn">Spara</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /scroll -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="idag">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+      <span class="nav-label">Idag</span>
+    </button>
+    <button class="nav-btn" data-view="inkorg">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+      <span class="nav-label">Inkorg</span>
+    </button>
+    <button class="nav-btn" data-view="projekt">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span class="nav-label">Projekt</span>
+    </button>
+    <button class="nav-btn" data-view="vardag">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="nav-label">Hem</span>
+    </button>
+    <button class="nav-btn" data-view="jobb">
+      <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      <span class="nav-label">Jobb</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- FAB -->
+<button class="fab" id="fab" title="Uppdatera">
+  <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+</button>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────
+const API = window.location.hostname === 'localhost'
+  ? 'http://localhost:8888/api'
+  : '/api';
+
+const IDS = {
+  daglig:  '34435850204c814787a9e45ca56e2c10',
+  inkorg:  '34435850204c81e5b2ecfb0c32bf6af3',
+  projekt: '34435850204c813192b2ff983edf7f3c',
+  vardag:  '34435850204c81d594aae3467c3dc49f',
+  jobb:    '34435850204c81d59887c213a15693ec',
+};
+
+const CATS = {
+  vardag:  { label: 'Vardag & familj', cls: 'cat-vardag'  },
+  jobb:    { label: 'Jobb VC',         cls: 'cat-jobb'    },
+  maire:   { label: 'Maire Riche',     cls: 'cat-maire'   },
+  mevent:  { label: 'M Event & Design',cls: 'cat-mevent'  },
+  projekt: { label: 'Projekt',         cls: 'cat-projekt' },
+};
+
+// ── STATE ──────────────────────────────────────────────
+let state = {
+  priorities: [],
+  focus: '',
+  inbox: [],
+  projects: [],
+  shopping: JSON.parse(localStorage.getItem('shopping') || '[]'),
+  workTasks: JSON.parse(localStorage.getItem('workTasks') || '[]'),
+  familyNotes: localStorage.getItem('familyNotes') || '',
+  workNotes: localStorage.getItem('workNotes') || '',
+  currentView: 'idag',
+};
+
+// ── NOTION API ─────────────────────────────────────────
+async function notion(path, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${API}?path=${encodeURIComponent(path)}`, opts);
+  return res.json();
+}
+
+// ── CLOCK ──────────────────────────────────────────────
+function tick() {
+  const now = new Date();
+  const h = now.getHours();
+  document.getElementById('clk').textContent =
+    `${String(h).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('tod').textContent =
+    h < 5 ? 'natt' : h < 10 ? 'morgon' : h < 12 ? 'förmiddag' : h < 17 ? 'eftermiddag' : h < 21 ? 'kväll' : 'natt';
+  const days   = ['sön','mån','tis','ons','tor','fre','lör'];
+  const months = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
+  document.getElementById('dt').textContent =
+    `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`;
+}
+tick();
+setInterval(tick, 30000);
+
+// ── NAVIGATION ─────────────────────────────────────────
+function setView(name) {
+  state.currentView = name;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`view-${name}`)?.classList.add('active');
+  document.querySelector(`[data-view="${name}"]`)?.classList.add('active');
+  document.getElementById('scroll').scrollTop = 0;
+
+  const showTabs = ['idag','inkorg','projekt'].includes(name);
+  document.getElementById('tabs').style.display = showTabs ? 'flex' : 'none';
+
+  if (name === 'idag' || name === 'inkorg' || name === 'projekt') {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`[data-tab="${name}"]`)?.classList.add('active');
+  }
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => setView(btn.dataset.view));
+});
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => setView(tab.dataset.tab));
+});
+
+// ── LOAD TODAY ─────────────────────────────────────────
+async function loadToday() {
+  document.getElementById('fab').classList.add('spinning');
+  try {
+    const page = await notion(`pages/${IDS.daglig}`);
+    const content = extractText(page);
+    const priorities = parsePriorities(content);
+    state.priorities = priorities;
+    state.focus = generateFocus(priorities);
+    renderPriorities();
+    document.getElementById('focus-text').textContent = state.focus || '—';
+  } catch(e) {
+    console.error(e);
+    document.getElementById('focus-text').textContent = 'Kunde inte hämta data.';
+  } finally {
+    document.getElementById('fab').classList.remove('spinning');
+  }
+}
+
+function extractText(page) {
+  if (!page?.results) return '';
+  return page.results
+    .map(b => {
+      const rt = b?.to_do?.rich_text || b?.paragraph?.rich_text || b?.bulleted_list_item?.rich_text || [];
+      return rt.map(t => t.plain_text).join('');
+    })
+    .join('\n');
+}
+
+function parsePriorities(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const prioLines = lines.filter(l => l.match(/^\d\.|^[-•]|^\[[ x]\]/i)).slice(0, 3);
+  return prioLines.length
+    ? prioLines.map(l => l.replace(/^\d\.|^[-•]|\[[ x]\]/g, '').trim())
+    : ['Inga prioriteringar inlagda ännu'];
+}
+
+function generateFocus(priorities) {
+  if (!priorities.length || priorities[0].includes('Inga')) return 'En dag i taget.';
+  return `Fokusera på det som faktiskt rör dig framåt.`;
+}
+
+// ── RENDER PRIORITIES ──────────────────────────────────
+function renderPriorities() {
+  const list = document.getElementById('prio-list');
+  list.innerHTML = '';
+  const nums = ['i','ii','iii'];
+
+  (state.priorities.length ? state.priorities : ['—','—','—']).forEach((p, i) => {
+    const li = document.createElement('li');
+    li.className = 'p-item';
+    li.innerHTML = `
+      <div class="p-head">
+        <span class="p-num">${nums[i] || i+1}</span>
+        <span class="p-title">${p}</span>
+        <svg class="p-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="p-body">
+        <div class="inline-loading">Laddar steg…</div>
+      </div>`;
+    li.querySelector('.p-head').addEventListener('click', () => togglePrio(li, p));
+    list.appendChild(li);
+  });
+}
+
+function togglePrio(li, title) {
+  const wasOpen = li.classList.contains('open');
+  document.querySelectorAll('.p-item.open').forEach(el => el.classList.remove('open'));
+  if (!wasOpen) {
+    li.classList.add('open');
+    loadSteps(li, title);
+  }
+}
+
+async function loadSteps(li, title) {
+  const body = li.querySelector('.p-body');
+  if (body.dataset.loaded) return;
+  body.dataset.loaded = '1';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        messages: [{
+          role: 'user',
+          content: `Uppgift: "${title}". Ge 3–4 konkreta handlingssteg. Svara ENBART med JSON-array: ["steg 1","steg 2","steg 3"]`
+        }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.find(b => b.type === 'text')?.text || '[]';
+    const steps = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] || '[]');
+    body.innerHTML = `
+      <p class="p-desc">${title}</p>
+      <div class="steps-label">Så här gör du</div>
+      <ul class="steps">
+        ${steps.map((s,i) => `<li class="step"><span class="step-n">${i+1}</span><span class="step-t">${s}</span></li>`).join('')}
+      </ul>`;
+  } catch(e) {
+    body.innerHTML = '<span style="font-size:.75rem;color:var(--taupe);font-style:italic">Kunde inte hämta steg.</span>';
+  }
+}
+
+// ── LOAD INBOX ─────────────────────────────────────────
+async function loadInbox() {
+  try {
+    const data = await notion(`blocks/${IDS.inkorg}/children`);
+    const items = (data.results || [])
+      .filter(b => b.type === 'paragraph' || b.type === 'bulleted_list_item')
+      .map(b => {
+        const rt = b.paragraph?.rich_text || b.bulleted_list_item?.rich_text || [];
+        return { id: b.id, text: rt.map(t => t.plain_text).join(''), suggested: null, moved: false };
+      })
+      .filter(i => i.text.trim());
+    state.inbox = items;
+    renderInbox();
+    categorizeInbox();
+  } catch(e) {
+    document.getElementById('inbox-list').innerHTML = '<span style="font-size:.8rem;color:var(--taupe);font-style:italic">Kunde inte hämta inkorg.</span>';
+  }
+}
+
+async function categorizeInbox() {
+  if (!state.inbox.length) return;
+  try {
+    const items = state.inbox.map((it, i) => `${i}: "${it.text}"`).join('\n');
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: `Kategorisera varje item: vardag, jobb, maire, mevent, projekt.\nItems:\n${items}\nSvara ENBART JSON: [{"index":0,"category":"vardag"}]`
+        }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.find(b => b.type === 'text')?.text || '[]';
+    const cats = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0] || '[]');
+    cats.forEach(c => { if (state.inbox[c.index]) state.inbox[c.index].suggested = c.category; });
+    renderInbox();
+  } catch(e) { console.error(e); }
+}
+
+function renderInbox() {
+  const container = document.getElementById('inbox-list');
+  const items = state.inbox.filter(i => !i.moved);
+  if (!items.length) {
+    container.innerHTML = '<div class="empty">Inkorgen är tom ✦</div>';
+    return;
+  }
+  container.innerHTML = '';
+  const list = document.createElement('div');
+  list.className = 'inbox-list';
+  items.forEach(item => {
+    const cat = item.suggested ? CATS[item.suggested] : null;
+    const div = document.createElement('div');
+    div.className = 'inbox-item';
+    div.id = `ii-${item.id}`;
+    div.innerHTML = `
+      <div class="inbox-text-block">
+        <div class="inbox-text">${item.text}</div>
+        ${cat ? `<span class="inbox-cat ${cat.cls}">${cat.label}</span>` : '<span style="font-size:.65rem;color:var(--taupe);font-style:italic">Analyserar…</span>'}
+      </div>
+      <button class="move-btn" ${!cat ? 'disabled' : ''}>Flytta</button>`;
+    div.querySelector('.move-btn').addEventListener('click', () => moveInboxItem(item));
+    list.appendChild(div);
+  });
+  container.appendChild(list);
+}
+
+async function moveInboxItem(item) {
+  const el = document.getElementById(`ii-${item.id}`);
+  const btn = el?.querySelector('.move-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+  try {
+    // Archive the block in Notion (delete from inbox)
+    await notion(`blocks/${item.id}`, 'DELETE');
+    item.moved = true;
+    el?.classList.add('moved');
+    setTimeout(() => renderInbox(), 500);
+    showToast(`Flyttad till ${CATS[item.suggested]?.label || 'Projekt'}`);
+  } catch(e) {
+    item.moved = true; // Remove from UI even if API fails
+    setTimeout(() => renderInbox(), 500);
+    showToast('Borttagen från inkorg');
+  }
+}
+
+// Add to inbox
+document.getElementById('inbox-add-btn').addEventListener('click', addToInbox);
+document.getElementById('inbox-input').addEventListener('keydown', e => { if (e.key === 'Enter') addToInbox(); });
+
+async function addToInbox() {
+  const input = document.getElementById('inbox-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  try {
+    await notion(`blocks/${IDS.inkorg}/children`, 'PATCH', {
+      children: [{
+        object: 'block',
+        type: 'paragraph',
+        paragraph: { rich_text: [{ type: 'text', text: { content: text } }] }
+      }]
+    });
+    showToast('Lagt till i inkorg');
+    loadInbox();
+  } catch(e) {
+    showToast('Fel — kontrollera anslutning');
+  }
+}
+
+// ── LOAD PROJECTS ──────────────────────────────────────
+async function loadProjects() {
+  try {
+    const data = await notion(`blocks/${IDS.projekt}/children`);
+    const projects = parseProjects(data.results || []);
+    state.projects = projects;
+    renderProjects();
+  } catch(e) {
+    document.getElementById('proj-list').innerHTML = '<span style="font-size:.8rem;color:var(--taupe);font-style:italic">Kunde inte hämta projekt.</span>';
+  }
+}
+
+function parseProjects(blocks) {
+  const projects = [];
+  let current = null;
+  const icons = { 'Maire Riche': '✨', 'Fotobås': '📸', 'meventodesign': '🎉', 'Digitala': '🛒', 'Make': '🤖' };
+
+  for (const b of blocks) {
+    const text = (b.heading_3?.rich_text || b.paragraph?.rich_text || []).map(t => t.plain_text).join('');
+    if (b.type === 'heading_3' && text) {
+      if (current) projects.push(current);
+      const iconKey = Object.keys(icons).find(k => text.includes(k));
+      current = { name: text, icon: icons[iconKey] || '📌', status: 'Aktiv', next: '', details: '' };
+    } else if (current) {
+      if (text.includes('Status:')) current.status = text.replace('Status:', '').trim();
+      else if (text.includes('Nästa steg:')) current.next = text.replace('Nästa steg:', '').trim();
+      else if (text.trim()) current.details += text + '\n';
+    }
+  }
+  if (current) projects.push(current);
+  return projects.filter(p => p.name && !p.name.includes('Aktiva') && !p.name.includes('Pausade') && !p.name.includes('Avslutade'));
+}
+
+function renderProjects() {
+  const list = document.getElementById('proj-list');
+  if (!state.projects.length) {
+    list.innerHTML = '<div class="empty">Inga projekt ännu</div>';
+    return;
+  }
+  list.innerHTML = '';
+  state.projects.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'proj-card';
+    div.innerHTML = `
+      <div class="proj-head">
+        <span class="proj-icon">${p.icon}</span>
+        <div class="proj-title-block">
+          <div class="proj-name">${p.name}</div>
+          ${p.next ? `<div class="proj-next">→ ${p.next}</div>` : ''}
+        </div>
+        <span class="proj-status">${p.status}</span>
+      </div>
+      <div class="proj-body">
+        <div class="proj-detail">${p.details || 'Inga detaljer.'}</div>
+      </div>`;
+    div.querySelector('.proj-head').addEventListener('click', () => {
+      const wasOpen = div.classList.contains('open');
+      document.querySelectorAll('.proj-card.open').forEach(el => el.classList.remove('open'));
+      if (!wasOpen) div.classList.add('open');
+    });
+    list.appendChild(div);
+  });
+}
+
+// ── VARDAG (local) ─────────────────────────────────────
+function renderShopping() {
+  const list = document.getElementById('shopping-list');
+  list.innerHTML = '';
+  state.shopping.forEach((item, i) => {
+    const li = document.createElement('li');
+    li.className = `check-item${item.done ? ' done' : ''}`;
+    li.innerHTML = `<input type="checkbox" ${item.done ? 'checked' : ''}><span>${item.text}</span>`;
+    li.querySelector('input').addEventListener('change', e => {
+      state.shopping[i].done = e.target.checked;
+      localStorage.setItem('shopping', JSON.stringify(state.shopping));
+      li.classList.toggle('done', e.target.checked);
+    });
+    list.appendChild(li);
+  });
+}
+
+document.getElementById('shopping-add-btn').addEventListener('click', addShopping);
+document.getElementById('shopping-input').addEventListener('keydown', e => { if (e.key === 'Enter') addShopping(); });
+
+function addShopping() {
+  const input = document.getElementById('shopping-input');
+  const text = input.value.trim();
+  if (!text) return;
+  state.shopping.push({ text, done: false });
+  localStorage.setItem('shopping', JSON.stringify(state.shopping));
+  input.value = '';
+  renderShopping();
+}
+
+// Notes
+document.getElementById('family-notes').value = state.familyNotes;
+document.getElementById('save-family-btn').addEventListener('click', () => {
+  state.familyNotes = document.getElementById('family-notes').value;
+  localStorage.setItem('familyNotes', state.familyNotes);
+  showToast('Sparat');
+});
+
+// ── JOBB (local) ───────────────────────────────────────
+function renderWorkTasks() {
+  const list = document.getElementById('work-list');
+  list.innerHTML = '';
+  state.workTasks.forEach((item, i) => {
+    const li = document.createElement('li');
+    li.className = `check-item${item.done ? ' done' : ''}`;
+    li.innerHTML = `<input type="checkbox" ${item.done ? 'checked' : ''}><span>${item.text}</span>`;
+    li.querySelector('input').addEventListener('change', e => {
+      state.workTasks[i].done = e.target.checked;
+      localStorage.setItem('workTasks', JSON.stringify(state.workTasks));
+      li.classList.toggle('done', e.target.checked);
+    });
+    list.appendChild(li);
+  });
+}
+
+document.getElementById('work-add-btn').addEventListener('click', addWorkTask);
+document.getElementById('work-input').addEventListener('keydown', e => { if (e.key === 'Enter') addWorkTask(); });
+
+function addWorkTask() {
+  const input = document.getElementById('work-input');
+  const text = input.value.trim();
+  if (!text) return;
+  state.workTasks.push({ text, done: false });
+  localStorage.setItem('workTasks', JSON.stringify(state.workTasks));
+  input.value = '';
+  renderWorkTasks();
+}
+
+document.getElementById('work-notes').value = state.workNotes;
+document.getElementById('save-work-btn').addEventListener('click', () => {
+  state.workNotes = document.getElementById('work-notes').value;
+  localStorage.setItem('workNotes', state.workNotes);
+  showToast('Sparat');
+});
+
+// ── TABS show for idag ─────────────────────────────────
+document.getElementById('tabs').style.display = 'flex';
+
+// ── REFRESH ────────────────────────────────────────────
+document.getElementById('fab').addEventListener('click', refreshAll);
+
+async function refreshAll() {
+  await Promise.all([loadToday(), loadInbox(), loadProjects()]);
+  showToast('Uppdaterat');
+}
+
+// ── TOAST ──────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── PWA ────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// ── INIT ───────────────────────────────────────────────
+renderShopping();
+renderWorkTasks();
+loadToday();
+loadInbox();
+loadProjects();
+</script>
+</body>
+</html>
