@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { font-family: 'DM Sans', sans-serif; }
+h1, h2, h3, h4 { font-family: 'Cormorant Garamond', serif; }
+body { background-color: #FAF8F4; color: #2C2416; margin: 0; }
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #E8E0D4;
+}
+::-webkit-scrollbar-thumb {
+  background: #B8975A;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8A6E40;
+}
